@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DSA Arsenal — 3D Pattern Visualiser</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <!-- Syntax highlighting -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css" />
+
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <!-- ===== Top bar ===== -->
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">
+          <span class="brand-dot"></span>
+        </div>
+        <div class="brand-text">
+          <h1>DSA&nbsp;Arsenal</h1>
+          <p>3D Pattern Visualiser · Deep&nbsp;Rust&nbsp;/&nbsp;Pearl</p>
+        </div>
+      </div>
+
+      <div class="topbar-right">
+        <div class="progress-pill" id="progressPill">
+          <span class="progress-count" id="progressCount">58</span>
+          <span class="progress-total">/ 58 built</span>
+        </div>
+        <button class="ghost-btn" id="menuToggle" aria-label="Toggle menu">☰</button>
+      </div>
+    </header>
+
+    <div class="layout">
+      <!-- ===== Sidebar ===== -->
+      <aside class="sidebar" id="sidebar">
+        <div class="sidebar-search">
+          <input type="text" id="searchInput" placeholder="Search patterns or problems…" autocomplete="off" />
+        </div>
+        <nav class="pattern-nav" id="patternNav"><!-- injected --></nav>
+        <div class="sidebar-footer">
+          <span>All 12 patterns · 58 simulations live</span>
+        </div>
+      </aside>
+
+      <!-- ===== Main content ===== -->
+      <main class="content" id="content"><!-- injected --></main>
+    </div>
+  </div>
+
+  <!-- ===== Three.js (global build, works over file://) ===== -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+  <!-- ===== highlight.js ===== -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/java.min.js"></script>
+
+  <!-- ===== App ===== -->
+  <script src="js/data.js"></script>
+  <script src="js/stage.js"></script>
+  <script src="js/viz/two-sum-ii.js"></script>
+  <script src="js/viz/three-sum.js"></script>
+  <script src="js/viz/container-water.js"></script>
+  <script src="js/viz/trapping-rain-water.js"></script>
+  <script src="js/viz/longest-substring.js"></script>
+  <script src="js/viz/min-subarray-sum.js"></script>
+  <script src="js/viz/longest-repeating.js"></script>
+  <script src="js/viz/min-window.js"></script>
+  <script src="js/viz/search-rotated.js"></script>
+  <script src="js/viz/find-min-rotated.js"></script>
+  <script src="js/viz/koko-bananas.js"></script>
+  <script src="js/viz/ship-capacity.js"></script>
+  <script src="js/viz/two-sum.js"></script>
+  <script src="js/viz/group-anagrams.js"></script>
+  <script src="js/viz/subarray-sum-k.js"></script>
+  <script src="js/viz/longest-consecutive.js"></script>
+  <script src="js/viz/daily-temperatures.js"></script>
+  <script src="js/viz/next-greater-circular.js"></script>
+  <script src="js/viz/largest-rectangle.js"></script>
+  <script src="js/viz/remove-dup-letters.js"></script>
+  <script src="js/viz/kth-largest.js"></script>
+  <script src="js/viz/top-k-frequent.js"></script>
+  <script src="js/viz/k-closest-points.js"></script>
+  <script src="js/viz/median-data-stream.js"></script>
+  <script src="js/viz/merge-k-lists.js"></script>
+  <script src="js/viz/merge-intervals.js"></script>
+  <script src="js/viz/insert-interval.js"></script>
+  <script src="js/viz/non-overlapping-intervals.js"></script>
+  <script src="js/viz/meeting-rooms-ii.js"></script>
+  <script src="js/viz/reverse-linked-list.js"></script>
+  <script src="js/viz/linked-list-cycle.js"></script>
+  <script src="js/viz/remove-nth-from-end.js"></script>
+  <script src="js/viz/reorder-list.js"></script>
+  <script src="js/viz/level-order-traversal.js"></script>
+  <script src="js/viz/validate-bst.js"></script>
+  <script src="js/viz/right-side-view.js"></script>
+  <script src="js/viz/lowest-common-ancestor.js"></script>
+  <script src="js/viz/max-path-sum.js"></script>
+  <script src="js/viz/serialize-tree.js"></script>
+  <!-- Batch 3 · Graphs -->
+  <script src="js/viz/number-of-islands.js"></script>
+  <script src="js/viz/clone-graph.js"></script>
+  <script src="js/viz/course-schedule.js"></script>
+  <script src="js/viz/rotting-oranges.js"></script>
+  <script src="js/viz/pacific-atlantic.js"></script>
+  <script src="js/viz/word-ladder.js"></script>
+  <script src="js/viz/network-delay-time.js"></script>
+  <!-- Batch 4 · Backtracking -->
+  <script src="js/viz/subsets.js"></script>
+  <script src="js/viz/permutations.js"></script>
+  <script src="js/viz/combination-sum.js"></script>
+  <script src="js/viz/word-search.js"></script>
+  <script src="js/viz/n-queens.js"></script>
+  <!-- Batch 5 · Dynamic Programming -->
+  <script src="js/viz/climbing-stairs.js"></script>
+  <script src="js/viz/house-robber.js"></script>
+  <script src="js/viz/coin-change.js"></script>
+  <script src="js/viz/longest-increasing-subsequence.js"></script>
+  <script src="js/viz/longest-common-subsequence.js"></script>
+  <script src="js/viz/word-break.js"></script>
+  <script src="js/viz/edit-distance.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
