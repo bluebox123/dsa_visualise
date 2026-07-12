@@ -686,19 +686,31 @@ DSAV.patterns = [
           "Any index left on the stack at the end never finds a warmer day → stays 0.",
           "Each index is pushed once and popped at most once → O(n)."
         ],
-        code: `public int[] dailyTemperatures(int[] temperatures) {
-    int n = temperatures.length;
-    int[] answer = new int[n];
-    Deque<Integer> stack = new ArrayDeque<>();  // decreasing temps
+        code: `import java.util.*;
 
-    for (int i = 0; i < n; i++) {
-        while (!stack.isEmpty() && temperatures[stack.peek()] < temperatures[i]) {
-            int j = stack.pop();
-            answer[j] = i - j;
+class Solution {
+    public int[] dailyTemperatures(int[] temperatures) {
+        int n = temperatures.length;
+        int[] answer = new int[n];
+        Deque<Integer> stack = new ArrayDeque<>();  // indices, decreasing temps
+
+        for (int i = 0; i < n; i++) {
+            while (!stack.isEmpty() && temperatures[stack.peek()] < temperatures[i]) {
+                int j = stack.pop();
+                answer[j] = i - j;
+            }
+            stack.push(i);
         }
-        stack.push(i);
+        return answer;
     }
-    return answer;
+}
+
+public class Main {
+    public static void main(String[] args) {
+        int[] temps = {73, 74, 75, 71, 69, 72, 76, 73};
+        int[] wait = new Solution().dailyTemperatures(temps);
+        System.out.println(Arrays.toString(wait));  // [1, 1, 4, 2, 1, 1, 0, 0]
+    }
 }`,
         complexity: { time: "O(n)", space: "O(n)" }
       },
@@ -722,23 +734,34 @@ DSAV.patterns = [
           "Only push <code>i</code> if <code>k &lt; n</code> (avoid pushing duplicates on the second lap).",
           "Two full passes still keep it O(n) — each index pushed once, popped at most once."
         ],
-        code: `public int[] nextGreaterElements(int[] nums) {
-    int n = nums.length;
-    int[] answer = new int[n];
-    Arrays.fill(answer, -1);
-    Deque<Integer> stack = new ArrayDeque<>();  // decreasing values
+        code: `import java.util.*;
 
-    for (int k = 2 * n - 1; k >= 0; k--) {
-        int i = k % n;
-        while (!stack.isEmpty() && nums[stack.peek()] <= nums[i]) {
-            stack.pop();
+class Solution {
+    public int[] nextGreaterElements(int[] nums) {
+        int n = nums.length;
+        int[] answer = new int[n];
+        Arrays.fill(answer, -1);
+        Deque<Integer> stack = new ArrayDeque<>();  // indices, decreasing values
+
+        for (int k = 2 * n - 1; k >= 0; k--) {
+            int i = k % n;
+            while (!stack.isEmpty() && nums[stack.peek()] <= nums[i]) {
+                stack.pop();
+            }
+            if (k < n) {
+                answer[i] = stack.isEmpty() ? -1 : nums[stack.peek()];
+            }
+            stack.push(i);
         }
-        if (k < n) {
-            answer[i] = stack.isEmpty() ? -1 : nums[stack.peek()];
-        }
-        stack.push(i);
+        return answer;
     }
-    return answer;
+}
+
+public class Main {
+    public static void main(String[] args) {
+        int[] nums = {1, 2, 1};
+        System.out.println(Arrays.toString(new Solution().nextGreaterElements(nums)));  // [2, -1, 2]
+    }
 }`,
         complexity: { time: "O(n)", space: "O(n)" }
       },
@@ -762,20 +785,31 @@ DSAV.patterns = [
           "<code>area = heights[top] × width</code>; track the maximum.",
           "Push <code>i</code>. Each index is pushed and popped once → O(n)."
         ],
-        code: `public int largestRectangleArea(int[] heights) {
-    Deque<Integer> stack = new ArrayDeque<>();
-    int n = heights.length, best = 0;
+        code: `import java.util.*;
 
-    for (int i = 0; i <= n; i++) {
-        int h = (i == n) ? 0 : heights[i];   // sentinel flushes the stack
-        while (!stack.isEmpty() && heights[stack.peek()] >= h) {
-            int top = stack.pop();
-            int width = stack.isEmpty() ? i : i - stack.peek() - 1;
-            best = Math.max(best, heights[top] * width);
+class Solution {
+    public int largestRectangleArea(int[] heights) {
+        Deque<Integer> stack = new ArrayDeque<>();
+        int n = heights.length, best = 0;
+
+        for (int i = 0; i <= n; i++) {
+            int h = (i == n) ? 0 : heights[i];   // sentinel flushes the stack
+            while (!stack.isEmpty() && heights[stack.peek()] >= h) {
+                int top = stack.pop();
+                int width = stack.isEmpty() ? i : i - stack.peek() - 1;
+                best = Math.max(best, heights[top] * width);
+            }
+            stack.push(i);
         }
-        stack.push(i);
+        return best;
     }
-    return best;
+}
+
+public class Main {
+    public static void main(String[] args) {
+        int[] heights = {2, 1, 5, 6, 2, 3};
+        System.out.println(new Solution().largestRectangleArea(heights));  // 10
+    }
 }`,
         complexity: { time: "O(n)", space: "O(n)" }
       },
@@ -799,27 +833,37 @@ DSAV.patterns = [
           "Else, while stack's top <code>&gt; c</code> AND <code>lastIndex[top] &gt; i</code>: pop it, remove from <code>inStack</code>.",
           "Push <code>c</code>, add to <code>inStack</code>. The stack at the end is the answer."
         ],
-        code: `public String removeDuplicateLetters(String s) {
-    int[] lastIndex = new int[26];
-    for (int i = 0; i < s.length(); i++) lastIndex[s.charAt(i) - 'a'] = i;
+        code: `import java.util.*;
 
-    Deque<Character> stack = new ArrayDeque<>();
-    boolean[] inStack = new boolean[26];
+class Solution {
+    public String removeDuplicateLetters(String s) {
+        int[] lastIndex = new int[26];
+        for (int i = 0; i < s.length(); i++) lastIndex[s.charAt(i) - 'a'] = i;
 
-    for (int i = 0; i < s.length(); i++) {
-        char c = s.charAt(i);
-        if (inStack[c - 'a']) continue;               // already used, skip
+        Deque<Character> stack = new ArrayDeque<>();
+        boolean[] inStack = new boolean[26];
 
-        while (!stack.isEmpty() && stack.peek() > c && lastIndex[stack.peek() - 'a'] > i) {
-            inStack[stack.pop() - 'a'] = false;        // safe to drop, reappears later
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            if (inStack[c - 'a']) continue;               // already used, skip
+
+            while (!stack.isEmpty() && stack.peek() > c && lastIndex[stack.peek() - 'a'] > i) {
+                inStack[stack.pop() - 'a'] = false;        // safe to drop, reappears later
+            }
+            stack.push(c);
+            inStack[c - 'a'] = true;
         }
-        stack.push(c);
-        inStack[c - 'a'] = true;
-    }
 
-    StringBuilder sb = new StringBuilder();
-    for (char c : stack) sb.append(c);
-    return sb.reverse().toString();
+        StringBuilder sb = new StringBuilder();
+        for (char c : stack) sb.append(c);
+        return sb.reverse().toString();   // stack iterates top->bottom, so reverse
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        System.out.println(new Solution().removeDuplicateLetters("cbacdcbc"));  // acdb
+    }
 }`,
         complexity: { time: "O(n)", space: "O(1) — 26 letters" }
       }
@@ -850,18 +894,29 @@ DSAV.patterns = [
           "Otherwise discard the value.",
           "After the scan, the heap's root is the k-th largest. O(n log k), much better than full sort when k ≪ n."
         ],
-        code: `public int findKthLargest(int[] nums, int k) {
-    PriorityQueue<Integer> heap = new PriorityQueue<>();  // min-heap
+        code: `import java.util.*;
 
-    for (int num : nums) {
-        if (heap.size() < k) {
-            heap.offer(num);
-        } else if (num > heap.peek()) {
-            heap.poll();
-            heap.offer(num);
+class Solution {
+    public int findKthLargest(int[] nums, int k) {
+        PriorityQueue<Integer> heap = new PriorityQueue<>();  // min-heap of size k
+
+        for (int num : nums) {
+            if (heap.size() < k) {
+                heap.offer(num);
+            } else if (num > heap.peek()) {
+                heap.poll();          // evict the smallest kept value
+                heap.offer(num);
+            }
         }
+        return heap.peek();           // root = k-th largest
     }
-    return heap.peek();
+}
+
+public class Main {
+    public static void main(String[] args) {
+        int[] nums = {3, 2, 1, 5, 6, 4};
+        System.out.println(new Solution().findKthLargest(nums, 2));  // 5
+    }
 }`,
         complexity: { time: "O(n log k)", space: "O(k)" }
       },
@@ -885,27 +940,39 @@ DSAV.patterns = [
           "Stop as soon as the result has k values.",
           "No comparison sort needed → O(n) time, O(n) space."
         ],
-        code: `public int[] topKFrequent(int[] nums, int k) {
-    Map<Integer, Integer> freq = new HashMap<>();
-    for (int num : nums) freq.merge(num, 1, Integer::sum);
+        code: `import java.util.*;
 
-    List<Integer>[] buckets = new List[nums.length + 1];
-    for (var entry : freq.entrySet()) {
-        int f = entry.getValue();
-        if (buckets[f] == null) buckets[f] = new ArrayList<>();
-        buckets[f].add(entry.getKey());
-    }
+class Solution {
+    public int[] topKFrequent(int[] nums, int k) {
+        Map<Integer, Integer> freq = new HashMap<>();
+        for (int num : nums) freq.merge(num, 1, Integer::sum);
 
-    int[] result = new int[k];
-    int idx = 0;
-    for (int f = buckets.length - 1; f >= 1 && idx < k; f--) {
-        if (buckets[f] == null) continue;
-        for (int v : buckets[f]) {
-            if (idx == k) break;
-            result[idx++] = v;
+        // bucket[f] holds every value that occurs exactly f times
+        List<Integer>[] buckets = new List[nums.length + 1];
+        for (var entry : freq.entrySet()) {
+            int f = entry.getValue();
+            if (buckets[f] == null) buckets[f] = new ArrayList<>();
+            buckets[f].add(entry.getKey());
         }
+
+        int[] result = new int[k];
+        int idx = 0;
+        for (int f = buckets.length - 1; f >= 1 && idx < k; f--) {   // walk high -> low freq
+            if (buckets[f] == null) continue;
+            for (int v : buckets[f]) {
+                if (idx == k) break;
+                result[idx++] = v;
+            }
+        }
+        return result;
     }
-    return result;
+}
+
+public class Main {
+    public static void main(String[] args) {
+        int[] nums = {1, 1, 1, 2, 2, 3};
+        System.out.println(Arrays.toString(new Solution().topKFrequent(nums, 2)));  // [1, 2]
+    }
 }`,
         complexity: { time: "O(n)", space: "O(n)" }
       },
@@ -929,21 +996,33 @@ DSAV.patterns = [
           "Otherwise discard.",
           "Return the heap's contents. O(n log k)."
         ],
-        code: `public int[][] kClosest(int[][] points, int k) {
-    // max-heap ordered by descending squared distance
-    PriorityQueue<int[]> heap = new PriorityQueue<>(
-        (a, b) -> (b[0]*b[0] + b[1]*b[1]) - (a[0]*a[0] + a[1]*a[1])
-    );
+        code: `import java.util.*;
 
-    for (int[] p : points) {
-        if (heap.size() < k) {
-            heap.offer(p);
-        } else if (p[0]*p[0] + p[1]*p[1] < heap.peek()[0]*heap.peek()[0] + heap.peek()[1]*heap.peek()[1]) {
-            heap.poll();
-            heap.offer(p);
+class Solution {
+    public int[][] kClosest(int[][] points, int k) {
+        // max-heap ordered by descending squared distance (farthest kept point on top)
+        PriorityQueue<int[]> heap = new PriorityQueue<>(
+            (a, b) -> (b[0]*b[0] + b[1]*b[1]) - (a[0]*a[0] + a[1]*a[1])
+        );
+
+        for (int[] p : points) {
+            if (heap.size() < k) {
+                heap.offer(p);
+            } else if (p[0]*p[0] + p[1]*p[1] < heap.peek()[0]*heap.peek()[0] + heap.peek()[1]*heap.peek()[1]) {
+                heap.poll();          // drop the current farthest
+                heap.offer(p);
+            }
         }
+        return heap.toArray(new int[0][]);
     }
-    return heap.toArray(new int[0][]);
+}
+
+public class Main {
+    public static void main(String[] args) {
+        int[][] points = {{1, 3}, {-2, 2}, {5, 8}, {0, 1}};
+        int[][] closest = new Solution().kClosest(points, 2);
+        System.out.println(Arrays.deepToString(closest));  // e.g. [[0, 1], [-2, 2]]
+    }
 }`,
         complexity: { time: "O(n log k)", space: "O(k)" }
       },
@@ -967,15 +1046,17 @@ DSAV.patterns = [
           "If unequal, median = root of the larger heap.",
           "Each insert is O(log n); each median lookup is O(1)."
         ],
-        code: `class MedianFinder {
-    private PriorityQueue<Integer> low = new PriorityQueue<>(Collections.reverseOrder()); // max-heap
-    private PriorityQueue<Integer> high = new PriorityQueue<>();                          // min-heap
+        code: `import java.util.*;
+
+class MedianFinder {
+    private PriorityQueue<Integer> low  = new PriorityQueue<>(Collections.reverseOrder()); // max-heap, smaller half
+    private PriorityQueue<Integer> high = new PriorityQueue<>();                            // min-heap, larger half
 
     public void addNum(int num) {
         if (low.isEmpty() || num <= low.peek()) low.offer(num);
         else high.offer(num);
 
-        // rebalance so sizes differ by at most 1
+        // rebalance so the two halves differ in size by at most 1
         if (low.size() > high.size() + 1) high.offer(low.poll());
         else if (high.size() > low.size() + 1) low.offer(high.poll());
     }
@@ -983,6 +1064,17 @@ DSAV.patterns = [
     public double findMedian() {
         if (low.size() == high.size()) return (low.peek() + high.peek()) / 2.0;
         return low.size() > high.size() ? low.peek() : high.peek();
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        MedianFinder mf = new MedianFinder();
+        mf.addNum(1);
+        mf.addNum(2);
+        System.out.println(mf.findMedian());  // 1.5
+        mf.addNum(3);
+        System.out.println(mf.findMedian());  // 2.0
     }
 }`,
         complexity: { time: "O(log n) add, O(1) median", space: "O(n)" }
@@ -1007,18 +1099,58 @@ DSAV.patterns = [
           "Repeat until the heap empties.",
           "Each of the n total nodes is pushed/popped once → O(n log k)."
         ],
-        code: `public ListNode mergeKLists(ListNode[] lists) {
-    PriorityQueue<ListNode> heap = new PriorityQueue<>((a, b) -> a.val - b.val);
-    for (ListNode node : lists) if (node != null) heap.offer(node);
+        code: `import java.util.*;
 
-    ListNode dummy = new ListNode(0), tail = dummy;
-    while (!heap.isEmpty()) {
-        ListNode smallest = heap.poll();
-        tail.next = smallest;
-        tail = tail.next;
-        if (smallest.next != null) heap.offer(smallest.next);
+// Definition for singly-linked list.
+class ListNode {
+    int val;
+    ListNode next;
+    ListNode() {}
+    ListNode(int val) { this.val = val; }
+    ListNode(int val, ListNode next) { this.val = val; this.next = next; }
+}
+
+class Solution {
+    public ListNode mergeKLists(ListNode[] lists) {
+        PriorityQueue<ListNode> heap = new PriorityQueue<>((a, b) -> a.val - b.val);
+        for (ListNode node : lists) if (node != null) heap.offer(node);
+
+        ListNode dummy = new ListNode(0), tail = dummy;
+        while (!heap.isEmpty()) {
+            ListNode smallest = heap.poll();
+            tail.next = smallest;
+            tail = tail.next;
+            if (smallest.next != null) heap.offer(smallest.next);
+        }
+        return dummy.next;
     }
-    return dummy.next;
+}
+
+public class Main {
+    public static void main(String[] args) {
+        // three sorted lists: [1,4,5], [1,3,4], [2,6]
+        ListNode[] lists = {
+            build(new int[]{1, 4, 5}),
+            build(new int[]{1, 3, 4}),
+            build(new int[]{2, 6})
+        };
+        ListNode merged = new Solution().mergeKLists(lists);
+        System.out.println(toList(merged));  // [1, 1, 2, 3, 4, 4, 5, 6]
+    }
+
+    // build a linked list from an array
+    static ListNode build(int[] a) {
+        ListNode dummy = new ListNode(0), t = dummy;
+        for (int x : a) { t.next = new ListNode(x); t = t.next; }
+        return dummy.next;
+    }
+
+    // linked list -> Java List for readable printing
+    static List<Integer> toList(ListNode head) {
+        List<Integer> out = new ArrayList<>();
+        for (ListNode c = head; c != null; c = c.next) out.add(c.val);
+        return out;
+    }
 }`,
         complexity: { time: "O(n log k)", space: "O(k)" }
       }
@@ -1049,19 +1181,31 @@ DSAV.patterns = [
           "Otherwise, append it as a new entry in the result.",
           "One pass after sorting → O(n log n) total."
         ],
-        code: `public int[][] merge(int[][] intervals) {
-    Arrays.sort(intervals, (a, b) -> a[0] - b[0]);
-    List<int[]> result = new ArrayList<>();
+        code: `import java.util.*;
 
-    for (int[] iv : intervals) {
-        if (result.isEmpty() || iv[0] > result.get(result.size() - 1)[1]) {
-            result.add(iv);                                  // no overlap, start fresh
-        } else {
-            int[] last = result.get(result.size() - 1);
-            last[1] = Math.max(last[1], iv[1]);               // fuse into the last group
+class Solution {
+    public int[][] merge(int[][] intervals) {
+        Arrays.sort(intervals, (a, b) -> a[0] - b[0]);   // sort by start time
+        List<int[]> result = new ArrayList<>();
+
+        for (int[] iv : intervals) {
+            if (result.isEmpty() || iv[0] > result.get(result.size() - 1)[1]) {
+                result.add(iv);                                  // no overlap, start fresh
+            } else {
+                int[] last = result.get(result.size() - 1);
+                last[1] = Math.max(last[1], iv[1]);               // fuse into the last group
+            }
         }
+        return result.toArray(new int[0][]);
     }
-    return result.toArray(new int[0][]);
+}
+
+public class Main {
+    public static void main(String[] args) {
+        int[][] intervals = {{1, 3}, {2, 6}, {8, 10}, {15, 18}};
+        System.out.println(Arrays.deepToString(new Solution().merge(intervals)));
+        // [[1, 6], [8, 10], [15, 18]]
+    }
 }`,
         complexity: { time: "O(n log n)", space: "O(n)" }
       },
@@ -1085,22 +1229,35 @@ DSAV.patterns = [
           "Phase 3: copy all remaining intervals as-is.",
           "Single linear scan → O(n)."
         ],
-        code: `public int[][] insert(int[][] intervals, int[] newInterval) {
-    List<int[]> result = new ArrayList<>();
-    int i = 0, n = intervals.length;
+        code: `import java.util.*;
 
-    while (i < n && intervals[i][1] < newInterval[0]) {   // ends before new starts
-        result.add(intervals[i++]);
-    }
-    while (i < n && intervals[i][0] <= newInterval[1]) {   // overlaps new interval
-        newInterval[0] = Math.min(newInterval[0], intervals[i][0]);
-        newInterval[1] = Math.max(newInterval[1], intervals[i][1]);
-        i++;
-    }
-    result.add(newInterval);
-    while (i < n) result.add(intervals[i++]);              // starts after new ends
+class Solution {
+    public int[][] insert(int[][] intervals, int[] newInterval) {
+        List<int[]> result = new ArrayList<>();
+        int i = 0, n = intervals.length;
 
-    return result.toArray(new int[0][]);
+        while (i < n && intervals[i][1] < newInterval[0]) {   // ends before new starts
+            result.add(intervals[i++]);
+        }
+        while (i < n && intervals[i][0] <= newInterval[1]) {   // overlaps new interval
+            newInterval[0] = Math.min(newInterval[0], intervals[i][0]);
+            newInterval[1] = Math.max(newInterval[1], intervals[i][1]);
+            i++;
+        }
+        result.add(newInterval);
+        while (i < n) result.add(intervals[i++]);              // starts after new ends
+
+        return result.toArray(new int[0][]);
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        int[][] intervals = {{1, 3}, {6, 9}};
+        int[] newInterval = {2, 5};
+        System.out.println(Arrays.deepToString(new Solution().insert(intervals, newInterval)));
+        // [[1, 5], [6, 9]]
+    }
 }`,
         complexity: { time: "O(n)", space: "O(n)" }
       },
@@ -1124,18 +1281,29 @@ DSAV.patterns = [
           "Otherwise, keep it: <code>lastEnd = interval.end</code>.",
           "One pass after sorting → O(n log n)."
         ],
-        code: `public int eraseOverlapIntervals(int[][] intervals) {
-    Arrays.sort(intervals, (a, b) -> a[1] - b[1]);   // sort by END time
-    int lastEnd = Integer.MIN_VALUE, removed = 0;
+        code: `import java.util.*;
 
-    for (int[] iv : intervals) {
-        if (iv[0] < lastEnd) {
-            removed++;                 // overlaps what we already kept - drop it
-        } else {
-            lastEnd = iv[1];           // no overlap - keep it
+class Solution {
+    public int eraseOverlapIntervals(int[][] intervals) {
+        Arrays.sort(intervals, (a, b) -> a[1] - b[1]);   // sort by END time
+        int lastEnd = Integer.MIN_VALUE, removed = 0;
+
+        for (int[] iv : intervals) {
+            if (iv[0] < lastEnd) {
+                removed++;                 // overlaps what we already kept - drop it
+            } else {
+                lastEnd = iv[1];           // no overlap - keep it
+            }
         }
+        return removed;
     }
-    return removed;
+}
+
+public class Main {
+    public static void main(String[] args) {
+        int[][] intervals = {{1, 2}, {2, 3}, {3, 4}, {1, 3}};
+        System.out.println(new Solution().eraseOverlapIntervals(intervals));  // 1
+    }
 }`,
         complexity: { time: "O(n log n)", space: "O(1)" }
       },
@@ -1159,25 +1327,36 @@ DSAV.patterns = [
           "Otherwise a meeting ends — <code>active--</code>, advance <code>e</code>. (Ties process the end first, freeing the room.)",
           "Return <code>peak</code>. O(n log n) for the sort, O(n) for the sweep."
         ],
-        code: `public int minMeetingRooms(int[][] intervals) {
-    int n = intervals.length;
-    int[] starts = new int[n], ends = new int[n];
-    for (int i = 0; i < n; i++) { starts[i] = intervals[i][0]; ends[i] = intervals[i][1]; }
-    Arrays.sort(starts);
-    Arrays.sort(ends);
+        code: `import java.util.*;
 
-    int s = 0, e = 0, active = 0, peak = 0;
-    while (s < n) {
-        if (starts[s] < ends[e]) {
-            active++;
-            peak = Math.max(peak, active);
-            s++;
-        } else {
-            active--;
-            e++;
+class Solution {
+    public int minMeetingRooms(int[][] intervals) {
+        int n = intervals.length;
+        int[] starts = new int[n], ends = new int[n];
+        for (int i = 0; i < n; i++) { starts[i] = intervals[i][0]; ends[i] = intervals[i][1]; }
+        Arrays.sort(starts);
+        Arrays.sort(ends);
+
+        int s = 0, e = 0, active = 0, peak = 0;
+        while (s < n) {
+            if (starts[s] < ends[e]) {
+                active++;                          // a meeting starts -> need a room
+                peak = Math.max(peak, active);
+                s++;
+            } else {
+                active--;                          // a meeting ends -> free a room
+                e++;
+            }
         }
+        return peak;
     }
-    return peak;
+}
+
+public class Main {
+    public static void main(String[] args) {
+        int[][] meetings = {{0, 30}, {5, 10}, {15, 20}};
+        System.out.println(new Solution().minMeetingRooms(meetings));  // 2
+    }
 }`,
         complexity: { time: "O(n log n)", space: "O(n)" }
       }
@@ -1208,16 +1387,51 @@ DSAV.patterns = [
           "Slide forward: <code>prev = curr</code>, <code>curr = next</code>.",
           "When the loop ends, <code>prev</code> is the new head. One pass → O(n)."
         ],
-        code: `public ListNode reverseList(ListNode head) {
-    ListNode prev = null, curr = head;
+        code: `import java.util.*;
 
-    while (curr != null) {
-        ListNode next = curr.next;   // save before overwriting
-        curr.next = prev;            // flip the link backward
-        prev = curr;                 // slide prev forward
-        curr = next;                 // slide curr forward
+// Definition for singly-linked list.
+class ListNode {
+    int val;
+    ListNode next;
+    ListNode() {}
+    ListNode(int val) { this.val = val; }
+    ListNode(int val, ListNode next) { this.val = val; this.next = next; }
+}
+
+class Solution {
+    public ListNode reverseList(ListNode head) {
+        ListNode prev = null, curr = head;
+
+        while (curr != null) {
+            ListNode next = curr.next;   // save before overwriting
+            curr.next = prev;            // flip the link backward
+            prev = curr;                 // slide prev forward
+            curr = next;                 // slide curr forward
+        }
+        return prev;   // new head
     }
-    return prev;   // new head
+}
+
+public class Main {
+    public static void main(String[] args) {
+        ListNode head = build(new int[]{1, 2, 3, 4, 5});
+        ListNode reversed = new Solution().reverseList(head);
+        System.out.println(toList(reversed));  // [5, 4, 3, 2, 1]
+    }
+
+    // build a linked list from an array
+    static ListNode build(int[] a) {
+        ListNode dummy = new ListNode(0), t = dummy;
+        for (int x : a) { t.next = new ListNode(x); t = t.next; }
+        return dummy.next;
+    }
+
+    // linked list -> Java List for readable printing
+    static List<Integer> toList(ListNode head) {
+        List<Integer> out = new ArrayList<>();
+        for (ListNode c = head; c != null; c = c.next) out.add(c.val);
+        return out;
+    }
 }`,
         complexity: { time: "O(n)", space: "O(1)" }
       },
@@ -1241,16 +1455,36 @@ DSAV.patterns = [
           "If the loop exits normally (fast hit null), return false.",
           "O(n) time, O(1) space — no extra data structure needed to track visited nodes."
         ],
-        code: `public boolean hasCycle(ListNode head) {
-    ListNode slow = head, fast = head;
+        code: `import java.util.*;
 
-    while (fast != null && fast.next != null) {
-        slow = slow.next;          // 1 hop
-        fast = fast.next.next;     // 2 hops
+// Definition for singly-linked list.
+class ListNode {
+    int val;
+    ListNode next;
+    ListNode(int val) { this.val = val; }
+}
 
-        if (slow == fast) return true;   // fast lapped slow inside a loop
+class Solution {
+    public boolean hasCycle(ListNode head) {
+        ListNode slow = head, fast = head;
+
+        while (fast != null && fast.next != null) {
+            slow = slow.next;          // 1 hop
+            fast = fast.next.next;     // 2 hops
+
+            if (slow == fast) return true;   // fast lapped slow inside a loop
+        }
+        return false;   // fast reached null - no cycle
     }
-    return false;   // fast reached null - no cycle
+}
+
+public class Main {
+    public static void main(String[] args) {
+        // 3 -> 2 -> 0 -> -4, with the tail pointing back to node "2" (a cycle)
+        ListNode a = new ListNode(3), b = new ListNode(2), c = new ListNode(0), d = new ListNode(-4);
+        a.next = b; b.next = c; c.next = d; d.next = b;   // d links back to b
+        System.out.println(new Solution().hasCycle(a));   // true
+    }
 }`,
         complexity: { time: "O(n)", space: "O(1)" }
       },
@@ -1274,19 +1508,52 @@ DSAV.patterns = [
           "When <code>fast</code> reaches null, <code>slow.next</code> is the node to remove — set <code>slow.next = slow.next.next</code>.",
           "Return <code>dummy.next</code> (handles removing the head). Single pass → O(n)."
         ],
-        code: `public ListNode removeNthFromEnd(ListNode head, int n) {
-    ListNode dummy = new ListNode(0, head);
-    ListNode slow = dummy, fast = dummy;
+        code: `import java.util.*;
 
-    for (int i = 0; i < n + 1; i++) fast = fast.next;   // open the gap
+// Definition for singly-linked list.
+class ListNode {
+    int val;
+    ListNode next;
+    ListNode() {}
+    ListNode(int val) { this.val = val; }
+    ListNode(int val, ListNode next) { this.val = val; this.next = next; }
+}
 
-    while (fast != null) {       // move together, gap stays fixed
-        slow = slow.next;
-        fast = fast.next;
+class Solution {
+    public ListNode removeNthFromEnd(ListNode head, int n) {
+        ListNode dummy = new ListNode(0, head);
+        ListNode slow = dummy, fast = dummy;
+
+        for (int i = 0; i < n + 1; i++) fast = fast.next;   // open the gap
+
+        while (fast != null) {       // move together, gap stays fixed
+            slow = slow.next;
+            fast = fast.next;
+        }
+        slow.next = slow.next.next;  // bridge past the target node
+
+        return dummy.next;
     }
-    slow.next = slow.next.next;  // bridge past the target node
+}
 
-    return dummy.next;
+public class Main {
+    public static void main(String[] args) {
+        ListNode head = build(new int[]{1, 2, 3, 4, 5});
+        ListNode result = new Solution().removeNthFromEnd(head, 2);
+        System.out.println(toList(result));  // [1, 2, 3, 5]
+    }
+
+    static ListNode build(int[] a) {
+        ListNode dummy = new ListNode(0), t = dummy;
+        for (int x : a) { t.next = new ListNode(x); t = t.next; }
+        return dummy.next;
+    }
+
+    static List<Integer> toList(ListNode head) {
+        List<Integer> out = new ArrayList<>();
+        for (ListNode c = head; c != null; c = c.next) out.add(c.val);
+        return out;
+    }
 }`,
         complexity: { time: "O(n)", space: "O(1)" }
       },
@@ -1310,34 +1577,65 @@ DSAV.patterns = [
           "Stop when one half is exhausted; the last first-half node's <code>next</code> should point to null.",
           "Three linear passes → O(n) time, O(1) extra space."
         ],
-        code: `public void reorderList(ListNode head) {
-    if (head == null || head.next == null) return;
+        code: `import java.util.*;
 
-    // 1) find the middle
-    ListNode slow = head, fast = head;
-    while (fast.next != null && fast.next.next != null) {
-        slow = slow.next; fast = fast.next.next;
+// Definition for singly-linked list.
+class ListNode {
+    int val;
+    ListNode next;
+    ListNode(int val) { this.val = val; }
+}
+
+class Solution {
+    public void reorderList(ListNode head) {
+        if (head == null || head.next == null) return;
+
+        // 1) find the middle
+        ListNode slow = head, fast = head;
+        while (fast.next != null && fast.next.next != null) {
+            slow = slow.next; fast = fast.next.next;
+        }
+
+        // 2) reverse the second half
+        ListNode second = slow.next;
+        slow.next = null;
+        ListNode prev = null;
+        while (second != null) {
+            ListNode next = second.next;
+            second.next = prev;
+            prev = second;
+            second = next;
+        }
+
+        // 3) merge the two halves alternately
+        ListNode first = head, secondHalf = prev;
+        while (secondHalf != null) {
+            ListNode n1 = first.next, n2 = secondHalf.next;
+            first.next = secondHalf;
+            secondHalf.next = n1;
+            first = n1;
+            secondHalf = n2;
+        }
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        ListNode head = build(new int[]{1, 2, 3, 4, 5});
+        new Solution().reorderList(head);   // reorders in place
+        System.out.println(toList(head));   // [1, 5, 2, 4, 3]
     }
 
-    // 2) reverse the second half
-    ListNode second = slow.next;
-    slow.next = null;
-    ListNode prev = null;
-    while (second != null) {
-        ListNode next = second.next;
-        second.next = prev;
-        prev = second;
-        second = next;
+    static ListNode build(int[] a) {
+        ListNode dummy = new ListNode(0), t = dummy;
+        for (int x : a) { t.next = new ListNode(x); t = t.next; }
+        return dummy.next;
     }
 
-    // 3) merge the two halves alternately
-    ListNode first = head, secondHalf = prev;
-    while (secondHalf != null) {
-        ListNode n1 = first.next, n2 = secondHalf.next;
-        first.next = secondHalf;
-        secondHalf.next = n1;
-        first = n1;
-        secondHalf = n2;
+    static List<Integer> toList(ListNode head) {
+        List<Integer> out = new ArrayList<>();
+        for (ListNode c = head; c != null; c = c.next) out.add(c.val);
+        return out;
     }
 }`,
         complexity: { time: "O(n)", space: "O(1)" }
@@ -1369,26 +1667,66 @@ DSAV.patterns = [
           "Append the level list to the result.",
           "Repeat until the queue empties. O(n) — every node is visited once."
         ],
-        code: `public List<List<Integer>> levelOrder(TreeNode root) {
-    List<List<Integer>> result = new ArrayList<>();
-    if (root == null) return result;
+        code: `import java.util.*;
 
-    Queue<TreeNode> queue = new LinkedList<>();
-    queue.offer(root);
+// Definition for a binary tree node.
+class TreeNode {
+    int val;
+    TreeNode left, right;
+    TreeNode(int val) { this.val = val; }
+}
 
-    while (!queue.isEmpty()) {
-        int size = queue.size();          // exactly this level's node count
-        List<Integer> level = new ArrayList<>();
+class Solution {
+    public List<List<Integer>> levelOrder(TreeNode root) {
+        List<List<Integer>> result = new ArrayList<>();
+        if (root == null) return result;
 
-        for (int i = 0; i < size; i++) {
-            TreeNode node = queue.poll();
-            level.add(node.val);
-            if (node.left != null) queue.offer(node.left);
-            if (node.right != null) queue.offer(node.right);
+        Queue<TreeNode> queue = new LinkedList<>();
+        queue.offer(root);
+
+        while (!queue.isEmpty()) {
+            int size = queue.size();          // exactly this level's node count
+            List<Integer> level = new ArrayList<>();
+
+            for (int i = 0; i < size; i++) {
+                TreeNode node = queue.poll();
+                level.add(node.val);
+                if (node.left != null) queue.offer(node.left);
+                if (node.right != null) queue.offer(node.right);
+            }
+            result.add(level);
         }
-        result.add(level);
+        return result;
     }
-    return result;
+}
+
+public class Main {
+    public static void main(String[] args) {
+        //     3
+        //    / \\
+        //   9  20
+        //      / \\
+        //    15   7
+        TreeNode root = buildTree(new Integer[]{3, 9, 20, null, null, 15, 7});
+        System.out.println(new Solution().levelOrder(root));  // [[3], [9, 20], [15, 7]]
+    }
+
+    // build a tree from a level-order array (null = missing child)
+    static TreeNode buildTree(Integer[] a) {
+        if (a.length == 0 || a[0] == null) return null;
+        TreeNode root = new TreeNode(a[0]);
+        Queue<TreeNode> q = new LinkedList<>();
+        q.offer(root);
+        int i = 1;
+        while (i < a.length) {
+            TreeNode node = q.poll();
+            if (i < a.length && a[i] != null) { node.left  = new TreeNode(a[i]); q.offer(node.left);  }
+            i++;
+            if (i < a.length && a[i] != null) { node.right = new TreeNode(a[i]); q.offer(node.right); }
+            i++;
+        }
+        return root;
+    }
 }`,
         complexity: { time: "O(n)", space: "O(n)" }
       },
@@ -1412,16 +1750,52 @@ DSAV.patterns = [
           "Recurse: <code>valid(node.left, lo, node.val)</code> and <code>valid(node.right, node.val, hi)</code>.",
           "Both must be true. One pass → O(n)."
         ],
-        code: `public boolean isValidBST(TreeNode root) {
-    return valid(root, null, null);
+        code: `import java.util.*;
+
+// Definition for a binary tree node.
+class TreeNode {
+    int val;
+    TreeNode left, right;
+    TreeNode(int val) { this.val = val; }
 }
 
-private boolean valid(TreeNode node, Integer lo, Integer hi) {
-    if (node == null) return true;
-    if ((lo != null && node.val <= lo) || (hi != null && node.val >= hi)) {
-        return false;
+class Solution {
+    public boolean isValidBST(TreeNode root) {
+        return valid(root, null, null);
     }
-    return valid(node.left, lo, node.val) && valid(node.right, node.val, hi);
+
+    private boolean valid(TreeNode node, Integer lo, Integer hi) {
+        if (node == null) return true;
+        if ((lo != null && node.val <= lo) || (hi != null && node.val >= hi)) {
+            return false;
+        }
+        return valid(node.left, lo, node.val) && valid(node.right, node.val, hi);
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        // level-order {5, 3, 8, 1, 4, 7, 9} -> a valid BST
+        TreeNode root = buildTree(new Integer[]{5, 3, 8, 1, 4, 7, 9});
+        System.out.println(new Solution().isValidBST(root));  // true
+    }
+
+    // build a tree from a level-order array (null = missing child)
+    static TreeNode buildTree(Integer[] a) {
+        if (a.length == 0 || a[0] == null) return null;
+        TreeNode root = new TreeNode(a[0]);
+        Queue<TreeNode> q = new LinkedList<>();
+        q.offer(root);
+        int i = 1;
+        while (i < a.length) {
+            TreeNode node = q.poll();
+            if (i < a.length && a[i] != null) { node.left  = new TreeNode(a[i]); q.offer(node.left);  }
+            i++;
+            if (i < a.length && a[i] != null) { node.right = new TreeNode(a[i]); q.offer(node.right); }
+            i++;
+        }
+        return root;
+    }
 }`,
         complexity: { time: "O(n)", space: "O(h) recursion, h = height" }
       },
@@ -1445,23 +1819,58 @@ private boolean valid(TreeNode node, Integer lo, Integer hi) {
           "Push all children as usual for the next level.",
           "Repeat until the queue is empty. O(n)."
         ],
-        code: `public List<Integer> rightSideView(TreeNode root) {
-    List<Integer> result = new ArrayList<>();
-    if (root == null) return result;
+        code: `import java.util.*;
 
-    Queue<TreeNode> queue = new LinkedList<>();
-    queue.offer(root);
+// Definition for a binary tree node.
+class TreeNode {
+    int val;
+    TreeNode left, right;
+    TreeNode(int val) { this.val = val; }
+}
 
-    while (!queue.isEmpty()) {
-        int size = queue.size();
-        for (int i = 0; i < size; i++) {
-            TreeNode node = queue.poll();
-            if (i == size - 1) result.add(node.val);   // rightmost of this level
-            if (node.left != null) queue.offer(node.left);
-            if (node.right != null) queue.offer(node.right);
+class Solution {
+    public List<Integer> rightSideView(TreeNode root) {
+        List<Integer> result = new ArrayList<>();
+        if (root == null) return result;
+
+        Queue<TreeNode> queue = new LinkedList<>();
+        queue.offer(root);
+
+        while (!queue.isEmpty()) {
+            int size = queue.size();
+            for (int i = 0; i < size; i++) {
+                TreeNode node = queue.poll();
+                if (i == size - 1) result.add(node.val);   // rightmost of this level
+                if (node.left != null) queue.offer(node.left);
+                if (node.right != null) queue.offer(node.right);
+            }
         }
+        return result;
     }
-    return result;
+}
+
+public class Main {
+    public static void main(String[] args) {
+        // level-order {1, 2, 3, null, 5, null, 4}
+        TreeNode root = buildTree(new Integer[]{1, 2, 3, null, 5, null, 4});
+        System.out.println(new Solution().rightSideView(root));  // [1, 3, 4]
+    }
+
+    static TreeNode buildTree(Integer[] a) {
+        if (a.length == 0 || a[0] == null) return null;
+        TreeNode root = new TreeNode(a[0]);
+        Queue<TreeNode> q = new LinkedList<>();
+        q.offer(root);
+        int i = 1;
+        while (i < a.length) {
+            TreeNode node = q.poll();
+            if (i < a.length && a[i] != null) { node.left  = new TreeNode(a[i]); q.offer(node.left);  }
+            i++;
+            if (i < a.length && a[i] != null) { node.right = new TreeNode(a[i]); q.offer(node.right); }
+            i++;
+        }
+        return root;
+    }
 }`,
         complexity: { time: "O(n)", space: "O(n)" }
       },
@@ -1485,14 +1894,41 @@ private boolean valid(TreeNode node, Integer lo, Integer hi) {
           "Otherwise return whichever of <code>left</code>/<code>right</code> is non-null (the found target bubbles up).",
           "Single pass → O(n)."
         ],
-        code: `public TreeNode lowestCommonAncestor(TreeNode node, TreeNode p, TreeNode q) {
-    if (node == null || node == p || node == q) return node;
+        code: `import java.util.*;
 
-    TreeNode left = lowestCommonAncestor(node.left, p, q);
-    TreeNode right = lowestCommonAncestor(node.right, p, q);
+// Definition for a binary tree node.
+class TreeNode {
+    int val;
+    TreeNode left, right;
+    TreeNode(int val) { this.val = val; }
+}
 
-    if (left != null && right != null) return node;   // split point found here
-    return left != null ? left : right;                // bubble up whichever side found something
+class Solution {
+    public TreeNode lowestCommonAncestor(TreeNode node, TreeNode p, TreeNode q) {
+        if (node == null || node == p || node == q) return node;
+
+        TreeNode left = lowestCommonAncestor(node.left, p, q);
+        TreeNode right = lowestCommonAncestor(node.right, p, q);
+
+        if (left != null && right != null) return node;   // split point found here
+        return left != null ? left : right;                // bubble up whichever side found something
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        //        3
+        //      5   1        (built by hand so we can hold node references)
+        //    6  2
+        TreeNode root = new TreeNode(3);
+        TreeNode five = new TreeNode(5), one = new TreeNode(1);
+        TreeNode six = new TreeNode(6), two = new TreeNode(2);
+        root.left = five; root.right = one;
+        five.left = six;  five.right = two;
+
+        TreeNode lca = new Solution().lowestCommonAncestor(root, six, two);
+        System.out.println(lca.val);  // 5
+    }
 }`,
         complexity: { time: "O(n)", space: "O(h) recursion" }
       },
@@ -1516,22 +1952,57 @@ private boolean valid(TreeNode node, Integer lo, Integer hi) {
           "Return <code>node.val + max(leftGain, rightGain)</code> upward — only one branch can continue.",
           "One pass, O(n); the global <code>best</code> is the answer."
         ],
-        code: `private int best = Integer.MIN_VALUE;
+        code: `import java.util.*;
 
-public int maxPathSum(TreeNode root) {
-    dfs(root);
-    return best;
+// Definition for a binary tree node.
+class TreeNode {
+    int val;
+    TreeNode left, right;
+    TreeNode(int val) { this.val = val; }
 }
 
-private int dfs(TreeNode node) {
-    if (node == null) return 0;
+class Solution {
+    private int best = Integer.MIN_VALUE;
 
-    int leftGain = Math.max(dfs(node.left), 0);    // negative gains aren't worth taking
-    int rightGain = Math.max(dfs(node.right), 0);
+    public int maxPathSum(TreeNode root) {
+        dfs(root);
+        return best;
+    }
 
-    best = Math.max(best, node.val + leftGain + rightGain);  // path bending through node
+    private int dfs(TreeNode node) {
+        if (node == null) return 0;
 
-    return node.val + Math.max(leftGain, rightGain);          // only one side continues upward
+        int leftGain = Math.max(dfs(node.left), 0);    // negative gains aren't worth taking
+        int rightGain = Math.max(dfs(node.right), 0);
+
+        best = Math.max(best, node.val + leftGain + rightGain);  // path bending through node
+
+        return node.val + Math.max(leftGain, rightGain);          // only one side continues upward
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        // level-order {-10, 9, 20, null, null, 15, 7}
+        TreeNode root = buildTree(new Integer[]{-10, 9, 20, null, null, 15, 7});
+        System.out.println(new Solution().maxPathSum(root));  // 42  (15 -> 20 -> 7)
+    }
+
+    static TreeNode buildTree(Integer[] a) {
+        if (a.length == 0 || a[0] == null) return null;
+        TreeNode root = new TreeNode(a[0]);
+        Queue<TreeNode> q = new LinkedList<>();
+        q.offer(root);
+        int i = 1;
+        while (i < a.length) {
+            TreeNode node = q.poll();
+            if (i < a.length && a[i] != null) { node.left  = new TreeNode(a[i]); q.offer(node.left);  }
+            i++;
+            if (i < a.length && a[i] != null) { node.right = new TreeNode(a[i]); q.offer(node.right); }
+            i++;
+        }
+        return root;
+    }
 }`,
         complexity: { time: "O(n)", space: "O(h) recursion" }
       },
@@ -1555,7 +2026,16 @@ private int dfs(TreeNode node) {
           "Otherwise create a node with that value, then recursively build its left and right children from the remaining tokens.",
           "Both directions are O(n)."
         ],
-        code: `public class Codec {
+        code: `import java.util.*;
+
+// Definition for a binary tree node.
+class TreeNode {
+    int val;
+    TreeNode left, right;
+    TreeNode(int val) { this.val = val; }
+}
+
+class Codec {
     public String serialize(TreeNode root) {
         StringBuilder sb = new StringBuilder();
         build(root, sb);
@@ -1582,6 +2062,25 @@ private int dfs(TreeNode node) {
         node.left = rebuild(tokens);
         node.right = rebuild(tokens);
         return node;
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        //   1
+        //  2 3
+        //   4 5
+        TreeNode root = new TreeNode(1);
+        root.left = new TreeNode(2);
+        root.right = new TreeNode(3);
+        root.right.left = new TreeNode(4);
+        root.right.right = new TreeNode(5);
+
+        Codec codec = new Codec();
+        String encoded = codec.serialize(root);
+        System.out.println(encoded);                    // 1,2,#,#,3,4,#,#,5,#,#,
+        TreeNode rebuilt = codec.deserialize(encoded);
+        System.out.println(codec.serialize(rebuilt));   // same string -> round-trip works
     }
 }`,
         complexity: { time: "O(n) both ways", space: "O(n)" }
@@ -1613,27 +2112,43 @@ private int dfs(TreeNode node) {
           "Water tiles and already-visited land are skipped.",
           "Every tile is touched a constant number of times → O(rows × cols)."
         ],
-        code: `public int numIslands(char[][] grid) {
-    int rows = grid.length, cols = grid[0].length, count = 0;
+        code: `import java.util.*;
 
-    for (int r = 0; r < rows; r++) {
-        for (int c = 0; c < cols; c++) {
-            if (grid[r][c] == '1') {   // unvisited land -> new island
-                count++;
-                flood(grid, r, c);
+class Solution {
+    public int numIslands(char[][] grid) {
+        int rows = grid.length, cols = grid[0].length, count = 0;
+
+        for (int r = 0; r < rows; r++) {
+            for (int c = 0; c < cols; c++) {
+                if (grid[r][c] == '1') {   // unvisited land -> new island
+                    count++;
+                    flood(grid, r, c);
+                }
             }
         }
+        return count;
     }
-    return count;
+
+    private void flood(char[][] grid, int r, int c) {
+        if (r < 0 || r >= grid.length || c < 0 || c >= grid[0].length || grid[r][c] != '1') return;
+        grid[r][c] = '0';                  // sink it so it isn't revisited
+        flood(grid, r + 1, c);
+        flood(grid, r - 1, c);
+        flood(grid, r, c + 1);
+        flood(grid, r, c - 1);
+    }
 }
 
-private void flood(char[][] grid, int r, int c) {
-    if (r < 0 || r >= grid.length || c < 0 || c >= grid[0].length || grid[r][c] != '1') return;
-    grid[r][c] = '0';                  // sink it so it isn't revisited
-    flood(grid, r + 1, c);
-    flood(grid, r - 1, c);
-    flood(grid, r, c + 1);
-    flood(grid, r, c - 1);
+public class Main {
+    public static void main(String[] args) {
+        char[][] grid = {
+            {'1','1','0','0','0'},
+            {'1','1','0','0','0'},
+            {'0','0','1','0','0'},
+            {'0','0','0','1','1'}
+        };
+        System.out.println(new Solution().numIslands(grid));  // 3
+    }
 }`,
         complexity: { time: "O(rows × cols)", space: "O(rows × cols) recursion worst case" }
       },
@@ -1657,20 +2172,50 @@ private void flood(char[][] grid, int r, int c) {
           "Recurse into each neighbour, wiring the returned clones into the copy's neighbour list.",
           "Every node and edge is processed once → O(V + E)."
         ],
-        code: `public Node cloneGraph(Node node) {
-    if (node == null) return null;
-    return dfs(node, new HashMap<>());
+        code: `import java.util.*;
+
+// Definition for a graph node.
+class Node {
+    public int val;
+    public List<Node> neighbors;
+    public Node(int val) {
+        this.val = val;
+        this.neighbors = new ArrayList<>();
+    }
 }
 
-private Node dfs(Node node, Map<Node, Node> clones) {
-    if (clones.containsKey(node)) return clones.get(node);
-
-    Node copy = new Node(node.val);
-    clones.put(node, copy);                 // register before recursing -> breaks cycles
-    for (Node nei : node.neighbors) {
-        copy.neighbors.add(dfs(nei, clones));
+class Solution {
+    public Node cloneGraph(Node node) {
+        if (node == null) return null;
+        return dfs(node, new HashMap<>());
     }
-    return copy;
+
+    private Node dfs(Node node, Map<Node, Node> clones) {
+        if (clones.containsKey(node)) return clones.get(node);
+
+        Node copy = new Node(node.val);
+        clones.put(node, copy);                 // register before recursing -> breaks cycles
+        for (Node nei : node.neighbors) {
+            copy.neighbors.add(dfs(nei, clones));
+        }
+        return copy;
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        // square graph: 1-2, 2-3, 3-4, 4-1
+        Node n1 = new Node(1), n2 = new Node(2), n3 = new Node(3), n4 = new Node(4);
+        n1.neighbors.addAll(Arrays.asList(n2, n4));
+        n2.neighbors.addAll(Arrays.asList(n1, n3));
+        n3.neighbors.addAll(Arrays.asList(n2, n4));
+        n4.neighbors.addAll(Arrays.asList(n1, n3));
+
+        Node clone = new Solution().cloneGraph(n1);
+        System.out.println(clone != n1);              // true  (a brand-new object)
+        System.out.println(clone.val);                // 1
+        System.out.println(clone.neighbors.size());   // 2
+    }
 }`,
         complexity: { time: "O(V + E)", space: "O(V)" }
       },
@@ -1694,28 +2239,41 @@ private Node dfs(Node node, Map<Node, Node> clones) {
           "Continue until the queue empties.",
           "Return true iff the number of courses taken equals the total → O(V + E)."
         ],
-        code: `public boolean canFinish(int numCourses, int[][] prerequisites) {
-    List<List<Integer>> adj = new ArrayList<>();
-    for (int i = 0; i < numCourses; i++) adj.add(new ArrayList<>());
-    int[] indegree = new int[numCourses];
+        code: `import java.util.*;
 
-    for (int[] p : prerequisites) {        // p = [course, prereq] -> edge prereq -> course
-        adj.get(p[1]).add(p[0]);
-        indegree[p[0]]++;
-    }
+class Solution {
+    public boolean canFinish(int numCourses, int[][] prerequisites) {
+        List<List<Integer>> adj = new ArrayList<>();
+        for (int i = 0; i < numCourses; i++) adj.add(new ArrayList<>());
+        int[] indegree = new int[numCourses];
 
-    Queue<Integer> queue = new LinkedList<>();
-    for (int i = 0; i < numCourses; i++) if (indegree[i] == 0) queue.offer(i);
-
-    int taken = 0;
-    while (!queue.isEmpty()) {
-        int course = queue.poll();
-        taken++;
-        for (int next : adj.get(course)) {
-            if (--indegree[next] == 0) queue.offer(next);
+        for (int[] p : prerequisites) {        // p = [course, prereq] -> edge prereq -> course
+            adj.get(p[1]).add(p[0]);
+            indegree[p[0]]++;
         }
+
+        Queue<Integer> queue = new LinkedList<>();
+        for (int i = 0; i < numCourses; i++) if (indegree[i] == 0) queue.offer(i);
+
+        int taken = 0;
+        while (!queue.isEmpty()) {
+            int course = queue.poll();
+            taken++;
+            for (int next : adj.get(course)) {
+                if (--indegree[next] == 0) queue.offer(next);
+            }
+        }
+        return taken == numCourses;            // all taken -> no cycle
     }
-    return taken == numCourses;            // all taken -> no cycle
+}
+
+public class Main {
+    public static void main(String[] args) {
+        Solution s = new Solution();
+        // to take course 1 you must first finish course 0
+        System.out.println(s.canFinish(2, new int[][]{{1, 0}}));           // true
+        System.out.println(s.canFinish(2, new int[][]{{1, 0}, {0, 1}}));   // false (cycle)
+    }
 }`,
         complexity: { time: "O(V + E)", space: "O(V + E)" }
       },
@@ -1739,33 +2297,48 @@ private Node dfs(Node node, Map<Node, Node> clones) {
           "Increment the minute counter once per non-empty layer.",
           "Return the minutes if no fresh remain, else −1 → O(rows × cols)."
         ],
-        code: `public int orangesRotting(int[][] grid) {
-    int rows = grid.length, cols = grid[0].length, fresh = 0;
-    Queue<int[]> queue = new LinkedList<>();
+        code: `import java.util.*;
 
-    for (int r = 0; r < rows; r++)
-        for (int c = 0; c < cols; c++) {
-            if (grid[r][c] == 2) queue.offer(new int[]{r, c});
-            else if (grid[r][c] == 1) fresh++;
-        }
+class Solution {
+    public int orangesRotting(int[][] grid) {
+        int rows = grid.length, cols = grid[0].length, fresh = 0;
+        Queue<int[]> queue = new LinkedList<>();
 
-    int minutes = 0;
-    int[][] dirs = {{1,0},{-1,0},{0,1},{0,-1}};
-    while (!queue.isEmpty() && fresh > 0) {
-        minutes++;
-        for (int i = queue.size(); i > 0; i--) {       // one full layer = one minute
-            int[] cell = queue.poll();
-            for (int[] d : dirs) {
-                int nr = cell[0] + d[0], nc = cell[1] + d[1];
-                if (nr >= 0 && nr < rows && nc >= 0 && nc < cols && grid[nr][nc] == 1) {
-                    grid[nr][nc] = 2;
-                    fresh--;
-                    queue.offer(new int[]{nr, nc});
+        for (int r = 0; r < rows; r++)
+            for (int c = 0; c < cols; c++) {
+                if (grid[r][c] == 2) queue.offer(new int[]{r, c});
+                else if (grid[r][c] == 1) fresh++;
+            }
+
+        int minutes = 0;
+        int[][] dirs = {{1,0},{-1,0},{0,1},{0,-1}};
+        while (!queue.isEmpty() && fresh > 0) {
+            minutes++;
+            for (int i = queue.size(); i > 0; i--) {       // one full layer = one minute
+                int[] cell = queue.poll();
+                for (int[] d : dirs) {
+                    int nr = cell[0] + d[0], nc = cell[1] + d[1];
+                    if (nr >= 0 && nr < rows && nc >= 0 && nc < cols && grid[nr][nc] == 1) {
+                        grid[nr][nc] = 2;
+                        fresh--;
+                        queue.offer(new int[]{nr, nc});
+                    }
                 }
             }
         }
+        return fresh == 0 ? minutes : -1;
     }
-    return fresh == 0 ? minutes : -1;
+}
+
+public class Main {
+    public static void main(String[] args) {
+        int[][] grid = {
+            {2, 1, 1},
+            {1, 1, 0},
+            {0, 1, 1}
+        };
+        System.out.println(new Solution().orangesRotting(grid));  // 4
+    }
 }`,
         complexity: { time: "O(rows × cols)", space: "O(rows × cols)" }
       },
@@ -1789,29 +2362,47 @@ private Node dfs(Node node, Map<Node, Node> clones) {
           "Collect those cells as the result.",
           "Each cell is visited a constant number of times per flood → O(rows × cols)."
         ],
-        code: `public List<List<Integer>> pacificAtlantic(int[][] heights) {
-    int rows = heights.length, cols = heights[0].length;
-    boolean[][] pac = new boolean[rows][cols], atl = new boolean[rows][cols];
+        code: `import java.util.*;
 
-    for (int r = 0; r < rows; r++) { dfs(heights, pac, r, 0); dfs(heights, atl, r, cols - 1); }
-    for (int c = 0; c < cols; c++) { dfs(heights, pac, 0, c); dfs(heights, atl, rows - 1, c); }
+class Solution {
+    public List<List<Integer>> pacificAtlantic(int[][] heights) {
+        int rows = heights.length, cols = heights[0].length;
+        boolean[][] pac = new boolean[rows][cols], atl = new boolean[rows][cols];
 
-    List<List<Integer>> res = new ArrayList<>();
-    for (int r = 0; r < rows; r++)
-        for (int c = 0; c < cols; c++)
-            if (pac[r][c] && atl[r][c]) res.add(Arrays.asList(r, c));
-    return res;
+        for (int r = 0; r < rows; r++) { dfs(heights, pac, r, 0); dfs(heights, atl, r, cols - 1); }
+        for (int c = 0; c < cols; c++) { dfs(heights, pac, 0, c); dfs(heights, atl, rows - 1, c); }
+
+        List<List<Integer>> res = new ArrayList<>();
+        for (int r = 0; r < rows; r++)
+            for (int c = 0; c < cols; c++)
+                if (pac[r][c] && atl[r][c]) res.add(Arrays.asList(r, c));
+        return res;
+    }
+
+    private void dfs(int[][] h, boolean[][] seen, int r, int c) {
+        seen[r][c] = true;
+        int[][] dirs = {{1,0},{-1,0},{0,1},{0,-1}};
+        for (int[] d : dirs) {
+            int nr = r + d[0], nc = c + d[1];
+            if (nr >= 0 && nr < h.length && nc >= 0 && nc < h[0].length
+                && !seen[nr][nc] && h[nr][nc] >= h[r][c]) {      // climb uphill in reverse
+                dfs(h, seen, nr, nc);
+            }
+        }
+    }
 }
 
-private void dfs(int[][] h, boolean[][] seen, int r, int c) {
-    seen[r][c] = true;
-    int[][] dirs = {{1,0},{-1,0},{0,1},{0,-1}};
-    for (int[] d : dirs) {
-        int nr = r + d[0], nc = c + d[1];
-        if (nr >= 0 && nr < h.length && nc >= 0 && nc < h[0].length
-            && !seen[nr][nc] && h[nr][nc] >= h[r][c]) {      // climb uphill in reverse
-            dfs(h, seen, nr, nc);
-        }
+public class Main {
+    public static void main(String[] args) {
+        int[][] heights = {
+            {1, 2, 2, 3, 5},
+            {3, 2, 3, 4, 4},
+            {2, 4, 5, 3, 1},
+            {6, 7, 1, 4, 5},
+            {5, 1, 1, 2, 4}
+        };
+        System.out.println(new Solution().pacificAtlantic(heights));
+        // cells that drain to both oceans
     }
 }`,
         complexity: { time: "O(rows × cols)", space: "O(rows × cols)" }
@@ -1836,33 +2427,45 @@ private void dfs(int[][] h, boolean[][] seen, int r, int c) {
           "Return the distance the moment you dequeue <code>endWord</code>.",
           "If BFS drains without reaching it, return 0. O(N · L² · 26) worst case."
         ],
-        code: `public int ladderLength(String beginWord, String endWord, List<String> wordList) {
-    Set<String> dict = new HashSet<>(wordList);
-    if (!dict.contains(endWord)) return 0;
+        code: `import java.util.*;
 
-    Queue<String> queue = new LinkedList<>();
-    queue.offer(beginWord);
-    int level = 1;
+class Solution {
+    public int ladderLength(String beginWord, String endWord, List<String> wordList) {
+        Set<String> dict = new HashSet<>(wordList);
+        if (!dict.contains(endWord)) return 0;
 
-    while (!queue.isEmpty()) {
-        for (int i = queue.size(); i > 0; i--) {
-            String word = queue.poll();
-            if (word.equals(endWord)) return level;
+        Queue<String> queue = new LinkedList<>();
+        queue.offer(beginWord);
+        int level = 1;
 
-            char[] chars = word.toCharArray();
-            for (int j = 0; j < chars.length; j++) {
-                char original = chars[j];
-                for (char c = 'a'; c <= 'z'; c++) {
-                    chars[j] = c;
-                    String next = new String(chars);
-                    if (dict.remove(next)) queue.offer(next);   // remove = mark visited
+        while (!queue.isEmpty()) {
+            for (int i = queue.size(); i > 0; i--) {
+                String word = queue.poll();
+                if (word.equals(endWord)) return level;
+
+                char[] chars = word.toCharArray();
+                for (int j = 0; j < chars.length; j++) {
+                    char original = chars[j];
+                    for (char c = 'a'; c <= 'z'; c++) {
+                        chars[j] = c;
+                        String next = new String(chars);
+                        if (dict.remove(next)) queue.offer(next);   // remove = mark visited
+                    }
+                    chars[j] = original;
                 }
-                chars[j] = original;
             }
+            level++;
         }
-        level++;
+        return 0;
     }
-    return 0;
+}
+
+public class Main {
+    public static void main(String[] args) {
+        List<String> words = Arrays.asList("hot", "dot", "dog", "lot", "log", "cog");
+        System.out.println(new Solution().ladderLength("hit", "cog", words));
+        // 5   (hit -> hot -> dot -> dog -> cog)
+    }
 }`,
         complexity: { time: "O(N · L² · 26)", space: "O(N · L)" }
       },
@@ -1886,34 +2489,46 @@ private void dfs(int[][] h, boolean[][] seen, int r, int c) {
           "Relaxing edge <code>u→v (w)</code>: if <code>dist[u] + w &lt; dist[v]</code>, update and push <code>v</code>.",
           "Answer is the max finalised distance, or −1 if any is still ∞. O(E log V)."
         ],
-        code: `public int networkDelayTime(int[][] times, int n, int k) {
-    List<int[]>[] adj = new List[n + 1];
-    for (int i = 1; i <= n; i++) adj[i] = new ArrayList<>();
-    for (int[] t : times) adj[t[0]].add(new int[]{t[1], t[2]});   // u -> (v, weight)
+        code: `import java.util.*;
 
-    int[] dist = new int[n + 1];
-    Arrays.fill(dist, Integer.MAX_VALUE);
-    dist[k] = 0;
+class Solution {
+    public int networkDelayTime(int[][] times, int n, int k) {
+        List<int[]>[] adj = new List[n + 1];
+        for (int i = 1; i <= n; i++) adj[i] = new ArrayList<>();
+        for (int[] t : times) adj[t[0]].add(new int[]{t[1], t[2]});   // u -> (v, weight)
 
-    PriorityQueue<int[]> heap = new PriorityQueue<>((a, b) -> a[1] - b[1]); // (node, dist)
-    heap.offer(new int[]{k, 0});
+        int[] dist = new int[n + 1];
+        Arrays.fill(dist, Integer.MAX_VALUE);
+        dist[k] = 0;
 
-    while (!heap.isEmpty()) {
-        int[] cur = heap.poll();
-        int u = cur[0], d = cur[1];
-        if (d > dist[u]) continue;                 // stale heap entry
-        for (int[] edge : adj[u]) {
-            int v = edge[0], w = edge[1];
-            if (d + w < dist[v]) { dist[v] = d + w; heap.offer(new int[]{v, dist[v]}); }
+        PriorityQueue<int[]> heap = new PriorityQueue<>((a, b) -> a[1] - b[1]); // (node, dist)
+        heap.offer(new int[]{k, 0});
+
+        while (!heap.isEmpty()) {
+            int[] cur = heap.poll();
+            int u = cur[0], d = cur[1];
+            if (d > dist[u]) continue;                 // stale heap entry
+            for (int[] edge : adj[u]) {
+                int v = edge[0], w = edge[1];
+                if (d + w < dist[v]) { dist[v] = d + w; heap.offer(new int[]{v, dist[v]}); }
+            }
         }
-    }
 
-    int ans = 0;
-    for (int i = 1; i <= n; i++) {
-        if (dist[i] == Integer.MAX_VALUE) return -1;
-        ans = Math.max(ans, dist[i]);
+        int ans = 0;
+        for (int i = 1; i <= n; i++) {
+            if (dist[i] == Integer.MAX_VALUE) return -1;
+            ans = Math.max(ans, dist[i]);
+        }
+        return ans;
     }
-    return ans;
+}
+
+public class Main {
+    public static void main(String[] args) {
+        // edges: u -> v takes w time
+        int[][] times = {{2, 1, 1}, {2, 3, 1}, {3, 4, 1}};
+        System.out.println(new Solution().networkDelayTime(times, 4, 2));  // 2
+    }
 }`,
         complexity: { time: "O(E log V)", space: "O(V + E)" }
       }
@@ -1944,18 +2559,29 @@ private void dfs(int[][] h, boolean[][] seen, int r, int c) {
           "The start index prevents reusing earlier elements → each subset appears once.",
           "2ⁿ subsets, each built in O(n) → O(n · 2ⁿ)."
         ],
-        code: `public List<List<Integer>> subsets(int[] nums) {
-    List<List<Integer>> res = new ArrayList<>();
-    dfs(nums, 0, new ArrayList<>(), res);
-    return res;
+        code: `import java.util.*;
+
+class Solution {
+    public List<List<Integer>> subsets(int[] nums) {
+        List<List<Integer>> res = new ArrayList<>();
+        dfs(nums, 0, new ArrayList<>(), res);
+        return res;
+    }
+
+    private void dfs(int[] nums, int start, List<Integer> current, List<List<Integer>> res) {
+        res.add(new ArrayList<>(current));          // every node is a valid subset
+        for (int i = start; i < nums.length; i++) {
+            current.add(nums[i]);                   // choose
+            dfs(nums, i + 1, current, res);         // explore
+            current.remove(current.size() - 1);     // un-choose (backtrack)
+        }
+    }
 }
 
-private void dfs(int[] nums, int start, List<Integer> current, List<List<Integer>> res) {
-    res.add(new ArrayList<>(current));          // every node is a valid subset
-    for (int i = start; i < nums.length; i++) {
-        current.add(nums[i]);                   // choose
-        dfs(nums, i + 1, current, res);         // explore
-        current.remove(current.size() - 1);     // un-choose (backtrack)
+public class Main {
+    public static void main(String[] args) {
+        System.out.println(new Solution().subsets(new int[]{1, 2, 3}));
+        // [[], [1], [1, 2], [1, 2, 3], [1, 3], [2], [2, 3], [3]]
     }
 }`,
         complexity: { time: "O(n · 2ⁿ)", space: "O(n) recursion" }
@@ -1980,22 +2606,33 @@ private void dfs(int[] nums, int start, List<Integer> current, List<List<Integer
           "Mark used, append, recurse; then un-mark and pop (backtrack).",
           "n! leaves, each O(n) to copy → O(n · n!)."
         ],
-        code: `public List<List<Integer>> permute(int[] nums) {
-    List<List<Integer>> res = new ArrayList<>();
-    dfs(nums, new boolean[nums.length], new ArrayList<>(), res);
-    return res;
+        code: `import java.util.*;
+
+class Solution {
+    public List<List<Integer>> permute(int[] nums) {
+        List<List<Integer>> res = new ArrayList<>();
+        dfs(nums, new boolean[nums.length], new ArrayList<>(), res);
+        return res;
+    }
+
+    private void dfs(int[] nums, boolean[] used, List<Integer> current, List<List<Integer>> res) {
+        if (current.size() == nums.length) {
+            res.add(new ArrayList<>(current));
+            return;
+        }
+        for (int i = 0; i < nums.length; i++) {
+            if (used[i]) continue;                  // already placed in this ordering
+            used[i] = true; current.add(nums[i]);   // choose
+            dfs(nums, used, current, res);          // explore
+            used[i] = false; current.remove(current.size() - 1);  // un-choose
+        }
+    }
 }
 
-private void dfs(int[] nums, boolean[] used, List<Integer> current, List<List<Integer>> res) {
-    if (current.size() == nums.length) {
-        res.add(new ArrayList<>(current));
-        return;
-    }
-    for (int i = 0; i < nums.length; i++) {
-        if (used[i]) continue;                  // already placed in this ordering
-        used[i] = true; current.add(nums[i]);   // choose
-        dfs(nums, used, current, res);          // explore
-        used[i] = false; current.remove(current.size() - 1);  // un-choose
+public class Main {
+    public static void main(String[] args) {
+        System.out.println(new Solution().permute(new int[]{1, 2, 3}));
+        // [[1, 2, 3], [1, 3, 2], [2, 1, 3], [2, 3, 1], [3, 1, 2], [3, 2, 1]]
     }
 }`,
         complexity: { time: "O(n · n!)", space: "O(n) recursion" }
@@ -2020,20 +2657,31 @@ private void dfs(int[] nums, boolean[] used, List<Integer> current, List<List<In
           "Loop <code>i</code> from <code>start</code>: choose <code>candidates[i]</code>, recurse with the <strong>same</strong> <code>i</code> (reuse allowed), then backtrack.",
           "Start index keeps combinations canonical → no duplicates."
         ],
-        code: `public List<List<Integer>> combinationSum(int[] candidates, int target) {
-    List<List<Integer>> res = new ArrayList<>();
-    dfs(candidates, 0, target, new ArrayList<>(), res);
-    return res;
+        code: `import java.util.*;
+
+class Solution {
+    public List<List<Integer>> combinationSum(int[] candidates, int target) {
+        List<List<Integer>> res = new ArrayList<>();
+        dfs(candidates, 0, target, new ArrayList<>(), res);
+        return res;
+    }
+
+    private void dfs(int[] cand, int start, int remain, List<Integer> current, List<List<Integer>> res) {
+        if (remain == 0) { res.add(new ArrayList<>(current)); return; }
+        if (remain < 0) return;                      // overshoot -> prune
+
+        for (int i = start; i < cand.length; i++) {
+            current.add(cand[i]);                    // choose
+            dfs(cand, i, remain - cand[i], current, res);  // reuse allowed: pass i, not i+1
+            current.remove(current.size() - 1);      // backtrack
+        }
+    }
 }
 
-private void dfs(int[] cand, int start, int remain, List<Integer> current, List<List<Integer>> res) {
-    if (remain == 0) { res.add(new ArrayList<>(current)); return; }
-    if (remain < 0) return;                      // overshoot -> prune
-
-    for (int i = start; i < cand.length; i++) {
-        current.add(cand[i]);                    // choose
-        dfs(cand, i, remain - cand[i], current, res);  // reuse allowed: pass i, not i+1
-        current.remove(current.size() - 1);      // backtrack
+public class Main {
+    public static void main(String[] args) {
+        System.out.println(new Solution().combinationSum(new int[]{2, 3, 6, 7}, 7));
+        // [[2, 2, 3], [7]]
     }
 }`,
         complexity: { time: "O(n^(target/min))", space: "O(target/min) recursion" }
@@ -2058,27 +2706,44 @@ private void dfs(int[] cand, int start, int remain, List<Integer> current, List<
           "Mark the cell used, recurse into the four neighbours; if any succeeds, propagate true.",
           "Restore the cell (backtrack) before returning. O(rows · cols · 4^L)."
         ],
-        code: `public boolean exist(char[][] board, String word) {
-    int rows = board.length, cols = board[0].length;
-    for (int r = 0; r < rows; r++)
-        for (int c = 0; c < cols; c++)
-            if (dfs(board, word, r, c, 0)) return true;
-    return false;
+        code: `import java.util.*;
+
+class Solution {
+    public boolean exist(char[][] board, String word) {
+        int rows = board.length, cols = board[0].length;
+        for (int r = 0; r < rows; r++)
+            for (int c = 0; c < cols; c++)
+                if (dfs(board, word, r, c, 0)) return true;
+        return false;
+    }
+
+    private boolean dfs(char[][] board, String word, int r, int c, int k) {
+        if (r < 0 || r >= board.length || c < 0 || c >= board[0].length || board[r][c] != word.charAt(k))
+            return false;
+        if (k == word.length() - 1) return true;
+
+        char tmp = board[r][c];
+        board[r][c] = '#';                           // mark visited in place
+        boolean found = dfs(board, word, r + 1, c, k + 1)
+                     || dfs(board, word, r - 1, c, k + 1)
+                     || dfs(board, word, r, c + 1, k + 1)
+                     || dfs(board, word, r, c - 1, k + 1);
+        board[r][c] = tmp;                           // restore (backtrack)
+        return found;
+    }
 }
 
-private boolean dfs(char[][] board, String word, int r, int c, int k) {
-    if (r < 0 || r >= board.length || c < 0 || c >= board[0].length || board[r][c] != word.charAt(k))
-        return false;
-    if (k == word.length() - 1) return true;
-
-    char tmp = board[r][c];
-    board[r][c] = '#';                           // mark visited in place
-    boolean found = dfs(board, word, r + 1, c, k + 1)
-                 || dfs(board, word, r - 1, c, k + 1)
-                 || dfs(board, word, r, c + 1, k + 1)
-                 || dfs(board, word, r, c - 1, k + 1);
-    board[r][c] = tmp;                           // restore (backtrack)
-    return found;
+public class Main {
+    public static void main(String[] args) {
+        char[][] board = {
+            {'A','B','C','E'},
+            {'S','F','C','S'},
+            {'A','D','E','E'}
+        };
+        Solution s = new Solution();
+        System.out.println(s.exist(board, "ABCCED"));  // true
+        System.out.println(s.exist(board, "ABCB"));    // false
+    }
 }`,
         complexity: { time: "O(rows · cols · 4^L)", space: "O(L) recursion" }
       },
@@ -2102,36 +2767,53 @@ private boolean dfs(char[][] board, String word, int r, int c, int k) {
           "Otherwise place the queen (add to all three sets), recurse to <code>row+1</code>, then remove it.",
           "Diagonal keys make the safety check O(1) → overall bounded by the number of valid placements."
         ],
-        code: `public List<List<String>> solveNQueens(int n) {
-    List<List<String>> res = new ArrayList<>();
-    Set<Integer> cols = new HashSet<>(), diag1 = new HashSet<>(), diag2 = new HashSet<>();
-    int[] placement = new int[n];
-    dfs(0, n, placement, cols, diag1, diag2, res);
-    return res;
-}
+        code: `import java.util.*;
 
-private void dfs(int row, int n, int[] placement,
-                 Set<Integer> cols, Set<Integer> diag1, Set<Integer> diag2,
-                 List<List<String>> res) {
-    if (row == n) { res.add(build(placement, n)); return; }
+class Solution {
+    public List<List<String>> solveNQueens(int n) {
+        List<List<String>> res = new ArrayList<>();
+        Set<Integer> cols = new HashSet<>(), diag1 = new HashSet<>(), diag2 = new HashSet<>();
+        int[] placement = new int[n];
+        dfs(0, n, placement, cols, diag1, diag2, res);
+        return res;
+    }
 
-    for (int col = 0; col < n; col++) {
-        if (cols.contains(col) || diag1.contains(row - col) || diag2.contains(row + col)) continue;
-        cols.add(col); diag1.add(row - col); diag2.add(row + col); placement[row] = col;
-        dfs(row + 1, n, placement, cols, diag1, diag2, res);
-        cols.remove(col); diag1.remove(row - col); diag2.remove(row + col);   // backtrack
+    private void dfs(int row, int n, int[] placement,
+                     Set<Integer> cols, Set<Integer> diag1, Set<Integer> diag2,
+                     List<List<String>> res) {
+        if (row == n) { res.add(build(placement, n)); return; }
+
+        for (int col = 0; col < n; col++) {
+            if (cols.contains(col) || diag1.contains(row - col) || diag2.contains(row + col)) continue;
+            cols.add(col); diag1.add(row - col); diag2.add(row + col); placement[row] = col;
+            dfs(row + 1, n, placement, cols, diag1, diag2, res);
+            cols.remove(col); diag1.remove(row - col); diag2.remove(row + col);   // backtrack
+        }
+    }
+
+    private List<String> build(int[] placement, int n) {
+        List<String> board = new ArrayList<>();
+        for (int r = 0; r < n; r++) {
+            char[] row = new char[n];
+            Arrays.fill(row, '.');
+            row[placement[r]] = 'Q';
+            board.add(new String(row));
+        }
+        return board;
     }
 }
 
-private List<String> build(int[] placement, int n) {
-    List<String> board = new ArrayList<>();
-    for (int r = 0; r < n; r++) {
-        char[] row = new char[n];
-        Arrays.fill(row, '.');
-        row[placement[r]] = 'Q';
-        board.add(new String(row));
+public class Main {
+    public static void main(String[] args) {
+        List<List<String>> solutions = new Solution().solveNQueens(4);
+        System.out.println("distinct boards: " + solutions.size());  // 2
+        for (String row : solutions.get(0)) System.out.println(row);
+        // one valid 4-queens board, e.g.
+        // .Q..
+        // ...Q
+        // Q...
+        // ..Q.
     }
-    return board;
 }`,
         complexity: { time: "O(n!)", space: "O(n) recursion + sets" }
       }
@@ -2162,16 +2844,22 @@ private List<String> build(int[] placement, int n) {
           "Keep only the previous two values to run in O(1) space.",
           "Single pass → O(n) time."
         ],
-        code: `public int climbStairs(int n) {
-    if (n <= 2) return n;
-    int prev2 = 1, prev1 = 2;          // ways to reach step 1 and step 2
+        code: `public class Main {
+    public int climbStairs(int n) {
+        if (n <= 2) return n;
+        int prev2 = 1, prev1 = 2;          // ways to reach step 1 and step 2
 
-    for (int i = 3; i <= n; i++) {
-        int cur = prev1 + prev2;       // dp[i] = dp[i-1] + dp[i-2]
-        prev2 = prev1;
-        prev1 = cur;
+        for (int i = 3; i <= n; i++) {
+            int cur = prev1 + prev2;       // dp[i] = dp[i-1] + dp[i-2]
+            prev2 = prev1;
+            prev1 = cur;
+        }
+        return prev1;
     }
-    return prev1;
+
+    public static void main(String[] args) {
+        System.out.println(new Main().climbStairs(5));  // 8
+    }
 }`,
         complexity: { time: "O(n)", space: "O(1)" }
       },
@@ -2195,15 +2883,21 @@ private List<String> build(int[] placement, int n) {
           "Return the last value.",
           "Track just the previous two → O(1) space, O(n) time."
         ],
-        code: `public int rob(int[] nums) {
-    int prev2 = 0, prev1 = 0;          // best loot two-back and one-back
+        code: `public class Main {
+    public int rob(int[] nums) {
+        int prev2 = 0, prev1 = 0;          // best loot two-back and one-back
 
-    for (int money : nums) {
-        int cur = Math.max(prev1, money + prev2);   // skip vs rob-this
-        prev2 = prev1;
-        prev1 = cur;
+        for (int money : nums) {
+            int cur = Math.max(prev1, money + prev2);   // skip vs rob-this
+            prev2 = prev1;
+            prev1 = cur;
+        }
+        return prev1;
     }
-    return prev1;
+
+    public static void main(String[] args) {
+        System.out.println(new Main().rob(new int[]{2, 7, 9, 3, 1}));  // 12
+    }
 }`,
         complexity: { time: "O(n)", space: "O(1)" }
       },
@@ -2227,17 +2921,25 @@ private List<String> build(int[] placement, int n) {
           "Return <code>dp[amount]</code>, or −1 if it never dropped below the sentinel.",
           "O(amount × coins) time, O(amount) space."
         ],
-        code: `public int coinChange(int[] coins, int amount) {
-    int[] dp = new int[amount + 1];
-    Arrays.fill(dp, amount + 1);       // sentinel = "unreachable"
-    dp[0] = 0;
+        code: `import java.util.*;
 
-    for (int a = 1; a <= amount; a++) {
-        for (int c : coins) {
-            if (c <= a) dp[a] = Math.min(dp[a], dp[a - c] + 1);
+public class Main {
+    public int coinChange(int[] coins, int amount) {
+        int[] dp = new int[amount + 1];
+        Arrays.fill(dp, amount + 1);       // sentinel = "unreachable"
+        dp[0] = 0;
+
+        for (int a = 1; a <= amount; a++) {
+            for (int c : coins) {
+                if (c <= a) dp[a] = Math.min(dp[a], dp[a - c] + 1);
+            }
         }
+        return dp[amount] > amount ? -1 : dp[amount];
     }
-    return dp[amount] > amount ? -1 : dp[amount];
+
+    public static void main(String[] args) {
+        System.out.println(new Main().coinChange(new int[]{1, 2, 5}, 11));  // 3  (5 + 5 + 1)
+    }
 }`,
         complexity: { time: "O(amount × coins)", space: "O(amount)" }
       },
@@ -2261,18 +2963,26 @@ private List<String> build(int[] placement, int n) {
           "Return that maximum.",
           "O(n²) time, O(n) space (O(n log n) possible with binary search)."
         ],
-        code: `public int lengthOfLIS(int[] nums) {
-    int n = nums.length, best = 1;
-    int[] dp = new int[n];
-    Arrays.fill(dp, 1);                 // each element is a length-1 subsequence
+        code: `import java.util.*;
 
-    for (int i = 0; i < n; i++) {
-        for (int j = 0; j < i; j++) {
-            if (nums[j] < nums[i]) dp[i] = Math.max(dp[i], dp[j] + 1);
+public class Main {
+    public int lengthOfLIS(int[] nums) {
+        int n = nums.length, best = 1;
+        int[] dp = new int[n];
+        Arrays.fill(dp, 1);                 // each element is a length-1 subsequence
+
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < i; j++) {
+                if (nums[j] < nums[i]) dp[i] = Math.max(dp[i], dp[j] + 1);
+            }
+            best = Math.max(best, dp[i]);
         }
-        best = Math.max(best, dp[i]);
+        return best;
     }
-    return best;
+
+    public static void main(String[] args) {
+        System.out.println(new Main().lengthOfLIS(new int[]{10, 9, 2, 5, 3, 7, 101, 18}));  // 4
+    }
 }`,
         complexity: { time: "O(n²)", space: "O(n)" }
       },
@@ -2296,20 +3006,26 @@ private List<String> build(int[] placement, int n) {
           "Mismatch → <code>dp[i][j] = max(dp[i−1][j], dp[i][j−1])</code>.",
           "Return <code>dp[m][n]</code>. O(m·n) time and space."
         ],
-        code: `public int longestCommonSubsequence(String text1, String text2) {
-    int m = text1.length(), n = text2.length();
-    int[][] dp = new int[m + 1][n + 1];
+        code: `public class Main {
+    public int longestCommonSubsequence(String text1, String text2) {
+        int m = text1.length(), n = text2.length();
+        int[][] dp = new int[m + 1][n + 1];
 
-    for (int i = 1; i <= m; i++) {
-        for (int j = 1; j <= n; j++) {
-            if (text1.charAt(i - 1) == text2.charAt(j - 1)) {
-                dp[i][j] = dp[i - 1][j - 1] + 1;            // extend diagonal
-            } else {
-                dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);  // best of dropping one
+        for (int i = 1; i <= m; i++) {
+            for (int j = 1; j <= n; j++) {
+                if (text1.charAt(i - 1) == text2.charAt(j - 1)) {
+                    dp[i][j] = dp[i - 1][j - 1] + 1;            // extend diagonal
+                } else {
+                    dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);  // best of dropping one
+                }
             }
         }
+        return dp[m][n];
     }
-    return dp[m][n];
+
+    public static void main(String[] args) {
+        System.out.println(new Main().longestCommonSubsequence("abcde", "ace"));  // 3  ("ace")
+    }
 }`,
         complexity: { time: "O(m · n)", space: "O(m · n)" }
       },
@@ -2333,20 +3049,28 @@ private List<String> build(int[] placement, int n) {
           "Return <code>dp[len]</code>.",
           "O(n²) substrings (× lookup) time, O(n) space."
         ],
-        code: `public boolean wordBreak(String s, List<String> wordDict) {
-    Set<String> dict = new HashSet<>(wordDict);
-    boolean[] dp = new boolean[s.length() + 1];
-    dp[0] = true;                       // empty prefix is segmentable
+        code: `import java.util.*;
 
-    for (int i = 1; i <= s.length(); i++) {
-        for (int j = 0; j < i; j++) {
-            if (dp[j] && dict.contains(s.substring(j, i))) {
-                dp[i] = true;
-                break;
+public class Main {
+    public boolean wordBreak(String s, List<String> wordDict) {
+        Set<String> dict = new HashSet<>(wordDict);
+        boolean[] dp = new boolean[s.length() + 1];
+        dp[0] = true;                       // empty prefix is segmentable
+
+        for (int i = 1; i <= s.length(); i++) {
+            for (int j = 0; j < i; j++) {
+                if (dp[j] && dict.contains(s.substring(j, i))) {
+                    dp[i] = true;
+                    break;
+                }
             }
         }
+        return dp[s.length()];
     }
-    return dp[s.length()];
+
+    public static void main(String[] args) {
+        System.out.println(new Main().wordBreak("leetcode", Arrays.asList("leet", "code")));  // true
+    }
 }`,
         complexity: { time: "O(n²) (+ substring)", space: "O(n)" }
       },
@@ -2370,25 +3094,31 @@ private List<String> build(int[] placement, int n) {
           "Mismatch → <code>dp[i][j] = 1 + min(replace, delete, insert)</code>.",
           "Return <code>dp[m][n]</code>. O(m·n) time and space."
         ],
-        code: `public int minDistance(String word1, String word2) {
-    int m = word1.length(), n = word2.length();
-    int[][] dp = new int[m + 1][n + 1];
+        code: `public class Main {
+    public int minDistance(String word1, String word2) {
+        int m = word1.length(), n = word2.length();
+        int[][] dp = new int[m + 1][n + 1];
 
-    for (int i = 0; i <= m; i++) dp[i][0] = i;   // delete all of A's prefix
-    for (int j = 0; j <= n; j++) dp[0][j] = j;   // insert all of B's prefix
+        for (int i = 0; i <= m; i++) dp[i][0] = i;   // delete all of A's prefix
+        for (int j = 0; j <= n; j++) dp[0][j] = j;   // insert all of B's prefix
 
-    for (int i = 1; i <= m; i++) {
-        for (int j = 1; j <= n; j++) {
-            if (word1.charAt(i - 1) == word2.charAt(j - 1)) {
-                dp[i][j] = dp[i - 1][j - 1];                 // free: letters match
-            } else {
-                dp[i][j] = 1 + Math.min(dp[i - 1][j - 1],    // replace
-                              Math.min(dp[i - 1][j],         // delete
-                                       dp[i][j - 1]));       // insert
+        for (int i = 1; i <= m; i++) {
+            for (int j = 1; j <= n; j++) {
+                if (word1.charAt(i - 1) == word2.charAt(j - 1)) {
+                    dp[i][j] = dp[i - 1][j - 1];                 // free: letters match
+                } else {
+                    dp[i][j] = 1 + Math.min(dp[i - 1][j - 1],    // replace
+                                  Math.min(dp[i - 1][j],         // delete
+                                           dp[i][j - 1]));       // insert
+                }
             }
         }
+        return dp[m][n];
     }
-    return dp[m][n];
+
+    public static void main(String[] args) {
+        System.out.println(new Main().minDistance("horse", "ros"));  // 3
+    }
 }`,
         complexity: { time: "O(m · n)", space: "O(m · n)" }
       }
